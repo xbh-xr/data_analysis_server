@@ -1,7 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"go-admin/cmd"
+	"go-admin/cmd/api"
 )
 
 //go:generate swag init --parseDependency --parseDepth=6 --instanceName admin -o ./docs/admin
@@ -17,5 +20,12 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	// 无参数时直接启动 API 主进程，便于 IDE 一键运行 / 调试
+	if len(os.Args) <= 1 {
+		if err := api.Start(); err != nil {
+			os.Exit(-1)
+		}
+		return
+	}
 	cmd.Execute()
 }

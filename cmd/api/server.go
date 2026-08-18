@@ -30,18 +30,15 @@ import (
 )
 
 var (
-	configYml string
+	configYml = "config/settings.yml"
 	apiCheck  bool
 	StartCmd  = &cobra.Command{
 		Use:          "server",
 		Short:        "Start API server",
 		Example:      "go-admin server -c config/settings.yml",
 		SilenceUsage: true,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			setup()
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run()
+			return Start()
 		},
 	}
 )
@@ -54,6 +51,12 @@ func init() {
 
 	//注册路由 fixme 其他应用的路由，在本目录新建文件放在init方法
 	AppRouters = append(AppRouters, router.InitRouter)
+}
+
+// Start 直接启动 API 主进程，可在 main 中调用，无需经过 cobra 子命令。
+func Start() error {
+	setup()
+	return run()
 }
 
 func setup() {
@@ -88,8 +91,8 @@ func run() error {
 	}
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", config.ApplicationConfig.Host, config.ApplicationConfig.Port),
-		Handler: sdk.Runtime.GetEngine(),
+		Addr:         fmt.Sprintf("%s:%d", config.ApplicationConfig.Host, config.ApplicationConfig.Port),
+		Handler:      sdk.Runtime.GetEngine(),
 		ReadTimeout:  time.Duration(config.ApplicationConfig.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(config.ApplicationConfig.WriterTimeout) * time.Second,
 	}

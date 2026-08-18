@@ -1,44 +1,27 @@
 package cmd
 
 import (
-	"errors"
-	"fmt"
-	"github.com/go-admin-team/go-admin-core/sdk/pkg"
-	"go-admin/cmd/app"
-	"go-admin/common/global"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"go-admin/cmd/api"
+	"go-admin/cmd/app"
 	"go-admin/cmd/config"
 	"go-admin/cmd/migrate"
 	"go-admin/cmd/version"
 )
 
 var rootCmd = &cobra.Command{
-	Use:          "go-admin",
-	Short:        "go-admin",
-	SilenceUsage: true,
-	Long:         `go-admin`,
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 1 {
-			tip()
-			return errors.New(pkg.Red("requires at least one arg"))
-		}
-		return nil
-	},
+	Use:               "go-admin",
+	Short:             "go-admin",
+	SilenceUsage:      true,
+	Long:              `go-admin`,
 	PersistentPreRunE: func(*cobra.Command, []string) error { return nil },
-	Run: func(cmd *cobra.Command, args []string) {
-		tip()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return api.Start()
 	},
-}
-
-func tip() {
-	usageStr := `欢迎使用 ` + pkg.Green(`go-admin `+global.Version) + ` 可以使用 ` + pkg.Red(`-h`) + ` 查看命令`
-	usageStr1 := `也可以参考 https://doc.go-admin.dev/guide/ksks 的相关内容`
-	fmt.Printf("%s\n", usageStr)
-	fmt.Printf("%s\n", usageStr1)
 }
 
 func init() {
@@ -49,9 +32,32 @@ func init() {
 	rootCmd.AddCommand(app.StartCmd)
 }
 
-//Execute : apply commands
+// Execute : apply commands。无子命令时默认启动 API 主进程。
 func Execute() {
+	if !hasKnownCommand(os.Args[1:]) {
+		rootCmd.SetArgs(append([]string{"server"}, os.Args[1:]...))
+	}
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(-1)
 	}
+}
+
+func hasKnownCommand(args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+	name := args[0]
+	switch name {
+	case "help", "completion", "-h", "--help":
+		return true
+	}
+	if strings.HasPrefix(name, "-") {
+		return false
+	}
+	for _, c := range rootCmd.Commands() {
+		if c.Name() == name || c.HasAlias(name) {
+			return true
+		}
+	}
+	return false
 }
