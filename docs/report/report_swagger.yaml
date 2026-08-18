@@ -1,0 +1,132 @@
+basePath: /
+definitions:
+  dto.DailyFiatGetReply:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/dto.DailyFiatGetResp'
+      msg:
+        example: 查询成功
+        type: string
+      requestId:
+        type: string
+    type: object
+  dto.DailyFiatGetResp:
+    properties:
+      beginTime:
+        example: "2026-07-30"
+        type: string
+      currencies:
+        items:
+          type: string
+        type: array
+      endTime:
+        example: "2026-08-17"
+        type: string
+      list:
+        items:
+          $ref: '#/definitions/dto.DailyFiatRow'
+        type: array
+    type: object
+  dto.DailyFiatRow:
+    properties:
+      actualProfit:
+        additionalProperties:
+          type: string
+        type: object
+      completedOrderCount:
+        additionalProperties:
+          type: integer
+        type: object
+      estimatedProfit:
+        additionalProperties:
+          type: string
+        type: object
+      groupDate:
+        example: "2026-08-01"
+        type: string
+      hedgedOrderCount:
+        additionalProperties:
+          type: integer
+        type: object
+      hedgedVolumeUsdt:
+        additionalProperties:
+          type: string
+        type: object
+      receivableProfit:
+        additionalProperties:
+          type: string
+        type: object
+      totalActualProfit:
+        additionalProperties:
+          type: string
+        type: object
+      totalEstimatedProfit:
+        additionalProperties:
+          type: string
+        type: object
+      totalProfit:
+        additionalProperties:
+          type: string
+        type: object
+      volumeCompleted:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+info:
+  contact: {}
+  description: 数据分析服务报表接口，供前端对接。金额类字段为字符串。
+  title: 数据分析报表 API
+  version: "1.0"
+paths:
+  /api/v1/report/daily-fiat:
+    get:
+      consumes:
+      - application/json
+      description: 按日期行、法币列返回完成单量、USDT 完成额、对冲指标，以及已收/待收/应收利润。side 仅筛选不分组。金额字段为字符串。
+      parameters:
+      - description: 开始日期（含），2006-01-02 或 2006-01-02 15:04:05，不传默认最近 30 天
+        in: query
+        name: beginTime
+        type: string
+      - description: 结束日期（含），格式同上，不传默认今天
+        in: query
+        name: endTime
+        type: string
+      - description: 法币过滤，逗号分隔，如 AED,AUD,BRL,CAD
+        in: query
+        name: fiatCurrency
+        type: string
+      - description: 方向筛选，1/BUY 或 2/SELL，不传则买卖合计
+        in: query
+        name: side
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DailyFiatGetReply'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/dto.DailyFiatGetReply'
+        "500":
+          description: 查询失败 / 业务库未初始化
+          schema:
+            $ref: '#/definitions/dto.DailyFiatGetReply'
+      security:
+      - Bearer: []
+      summary: 法币每日完成/对冲/利润报表
+      tags:
+      - 报表
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

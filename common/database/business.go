@@ -2,14 +2,11 @@ package database
 
 import (
 	"errors"
-	"time"
 
 	log "github.com/go-admin-team/go-admin-core/logger"
 	"github.com/go-admin-team/go-admin-core/sdk/pkg"
 	toolsDB "github.com/go-admin-team/go-admin-core/tools/database"
-	. "github.com/go-admin-team/go-admin-core/tools/gorm/logger"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"go-admin/config"
@@ -45,7 +42,6 @@ func SetupBusiness() {
 		log.Fatal(pkg.Red("business database unsupported driver: " + c.Driver))
 	}
 
-	log.Infof("%s => %s", BusinessDBKey, pkg.Green(c.Source))
 	resolverConfig := toolsDB.NewConfigure(
 		c.Source,
 		c.MaxIdleConns,
@@ -58,14 +54,7 @@ func SetupBusiness() {
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
-		Logger: New(
-			logger.Config{
-				SlowThreshold: time.Second,
-				Colorful:      true,
-				LogLevel: logger.LogLevel(
-					log.DefaultLogger.Options().Level.LevelForGorm()),
-			},
-		),
+		Logger: newGormLogger(),
 	}, open)
 	if err != nil {
 		log.Fatal(pkg.Red("business "+c.Driver+" connect error :"), err)

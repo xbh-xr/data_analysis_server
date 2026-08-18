@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -81,7 +82,8 @@ func setup() {
 }
 
 func run() error {
-	if config.ApplicationConfig.Mode == pkg.ModeProd.String() {
+	// logger 非 debug/trace 时关闭 GIN-debug 路由表输出
+	if config.ApplicationConfig.Mode == pkg.ModeProd.String() || !isGinDebugLogLevel(config.LoggerConfig.Level) {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	initRouter()
@@ -189,4 +191,13 @@ func initRouter() {
 
 	common.InitMiddleware(r)
 
+}
+
+func isGinDebugLogLevel(level string) bool {
+	switch strings.ToLower(strings.TrimSpace(level)) {
+	case "debug", "trace":
+		return true
+	default:
+		return false
+	}
 }
