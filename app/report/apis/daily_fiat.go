@@ -16,7 +16,7 @@ type DailyFiat struct {
 
 // Get 法币每日完成/对冲/利润报表
 // @Summary 法币每日完成/对冲/利润报表
-// @Description 按日期行、法币列返回完成单量、USDT 完成额、对冲指标，以及已收/待收/应收利润。side 仅筛选不分组。金额字段为字符串。
+// @Description 按日期行、法币列返回完成单量、USDT 完成额、对冲指标，以及已收/待收/应收利润。订单完成但对冲未完成计待收，对冲完成计已收。side 仅筛选不分组。金额字段为字符串。
 // @Tags 报表
 // @Accept json
 // @Produce json

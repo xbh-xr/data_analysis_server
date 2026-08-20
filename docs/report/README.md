@@ -61,8 +61,8 @@ GET /api/v1/report/daily-fiat?beginTime=2026-07-30&endTime=2026-08-17&fiatCurren
 | volumeCompleted | `{ [fiat]: string }` | Volume completed (USDT)，`fiat_amount / rate` |
 | hedgedOrderCount | `{ [fiat]: number }` | Hedged Order Count |
 | hedgedVolumeUsdt | `{ [fiat]: string }` | Hedged Volume_USDT，`hedged_fiat_amount / hedged_rate` |
-| actualProfit | `{ [fiat]: string }` | 已收：`actual_profit.fiat`（对冲 SUCCESSFUL） |
-| estimatedProfit | `{ [fiat]: string }` | 待收：BUY 取 `buy_check_point.estimated_profit.fiat`，SELL 取 `sell_check_point.estimated_profit.fiat` |
+| actualProfit | `{ [fiat]: string }` | 已收：订单已完成且对冲已完成（hedges.status=3），取 `actual_profit.fiat` |
+| estimatedProfit | `{ [fiat]: string }` | 待收：订单已完成但对冲未完成，BUY 取 `buy_check_point.estimated_profit.fiat`，SELL 取 `sell_check_point.estimated_profit.fiat` |
 | receivableProfit | `{ [fiat]: string }` | 应收：当日已收 + 待收 |
 | totalActualProfit | `{ [fiat]: string }` | 已收累计 |
 | totalEstimatedProfit | `{ [fiat]: string }` | 待收累计 |
@@ -108,12 +108,14 @@ GET /api/v1/report/daily-fiat?beginTime=2026-07-30&endTime=2026-08-17&fiatCurren
 
 ### 统计口径
 
-- 完成单：`source_status = 6` 且 `flow_status = 19`
+- 完成单：`source_status = 6`，且 `flow_status` 为 `19`（已结算）或 `12`（对冲中）。同一笔订单只进利润的其中一个桶：
+  - 对冲已完成（`hedges.status = 3` SUCCESSFUL）→ `actualProfit`
+  - 对冲未完成（无对冲 / PENDING / FAILED 等）→ `estimatedProfit`
 - `side` 只作为 WHERE 筛选：`1` BUY / `2` SELL，不传则买卖合计进同一单元格
 - 完成额 USDT：`fiat_amount / rate`（`rate` = 1 USD 对应的法币）
 - 对冲额 USDT：`hedged_fiat_amount / hedged_rate`；对冲汇率为 0 时回退到订单汇率
 - 对冲状态：0 UNKNOWN / 1 PENDING / 2 PLACING_AN_ORDER / 3 SUCCESSFUL / 4 FAILED
-- 已收：对冲 SUCCESSFUL，取订单 `actual_profit.fiat`
+- 已收：对冲 SUCCESSFUL，取订单 `actual_profit.fiat`（此时不用预估利润）
 - 待收：对冲非 SUCCESSFUL 时，BUY 取 `buy_check_point.estimated_profit.fiat`，SELL 取 `sell_check_point.estimated_profit.fiat`
 - 应收 = 已收 + 待收
 - 日期：按 `source_created_at` 的自然日

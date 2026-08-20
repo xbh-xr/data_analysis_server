@@ -58,6 +58,8 @@ func (e *DailyFiat) Get(req *dto.DailyFiatGetReq) (*dto.DailyFiatGetResp, error)
 }
 
 func (e *DailyFiat) queryAgg(begin, endExclusive time.Time, currencies []string, side int) ([]dailyFiatAggRow, error) {
+	// 完成单：source_status=6，含已结算(flow_status=19)与对冲中(12)。
+	// 对冲完成(hedges.status=3)只计 actual_profit，否则只计 estimated_profit。
 	sql := `
 SELECT
   DATE_FORMAT(DATE(o.source_created_at), '%Y-%m-%d') AS group_date,
@@ -97,7 +99,7 @@ LEFT JOIN (
 WHERE o.source_created_at >= ?
   AND o.source_created_at < ?
   AND o.source_status = 6
-  AND o.flow_status = 19
+  AND o.flow_status IN (12, 19)
 `
 	args := []interface{}{begin, endExclusive, begin, endExclusive}
 	if len(currencies) > 0 {
